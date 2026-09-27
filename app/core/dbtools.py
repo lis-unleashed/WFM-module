@@ -91,6 +91,66 @@ def ensure_group_roles(admin_url: str) -> None:
         ensure_role(conn, APP_ROLE)
 
 
+def setup_local_database(admin_url: str, migration_url: str, app_url: str) -> list[str]:
+    """Creates the logins and database that the two URLs describe. Returns what it did.
+
+    For local and test use: it sets the logins' passwords to the ones in the
+    URLs. It never touches a superuser, and it refuses to let the app log in
+    as the schema owner, because the owner can change anything.
+    """
+    owner = conninfo_to_dict(migration_url)
+    app = conninfo_to_dict(app_url)
+    dbname = owner.get("dbname")
+    if not dbname or app.get("dbname") != dbname:
+        raise ServerError(
+            "WFM_DATABASE_URL and WFM_MIGRATION_DATABASE_URL must name the same database."
+        )
+    if owner.get("user") == app.get("user"):
+        raise ServerError(
+            "The app and migrations need different database logins, so the app "
+            "can't change the schema or the append-only tables."
+        )
+    done: list[str] = []
+    with psycopg.connect(admin_url, autocommit=True) as conn:
+        ensure_role(conn, APP_ROLE)
+        done += _ensure_login(conn, owner)
+        done += _ensure_login(conn, app, member_of=APP_ROLE)
+        if conn.execute("SELECT 1 FROM pg_database WHERE datname = %s", (dbname,)).fetchone():
+            done.append(f"database {dbname} already exists")
+        else:
+            conn.execute(
+                sql.SQL("CREATE DATABASE {} OWNER {}").format(
+                    sql.Identifier(str(dbname)), sql.Identifier(str(owner["user"]))
+                )
+            )
+            done.append(f"created database {dbname}")
+    return done
+
+
+def _ensure_login(
+    conn: psycopg.Connection[Any], params: dict[str, Any], *, member_of: str | None = None
+) -> list[str]:
+    user, password = params.get("user"), params.get("password")
+    if not user or not password:
+        raise ServerError("Each database URL needs a user name and a password.")
+    row = conn.execute("SELECT rolsuper FROM pg_roles WHERE rolname = %s", (user,)).fetchone()
+    if row is not None and row[0]:
+        if member_of is not None:
+            raise ServerError(f"The app's login ({user}) must not be a superuser.")
+        return [f"{user} is a superuser, so it was left alone"]
+    statement = (
+        "ALTER ROLE {} LOGIN PASSWORD {}" if row is not None else "CREATE ROLE {} LOGIN PASSWORD {}"
+    )
+    conn.execute(sql.SQL(statement).format(sql.Identifier(user), sql.Literal(password)))
+    done = [f"{'updated' if row is not None else 'created'} login {user}"]
+    if member_of is not None:
+        conn.execute(
+            sql.SQL("GRANT {} TO {}").format(sql.Identifier(member_of), sql.Identifier(user))
+        )
+        done[0] += f" (a member of {member_of})"
+    return done
+
+
 def create_database(admin_url: str, dbname: str, *, owner: str) -> None:
     with psycopg.connect(admin_url, autocommit=True) as conn:
         conn.execute(

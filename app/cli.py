@@ -45,6 +45,11 @@ def _parser() -> argparse.ArgumentParser:
     )
     p.set_defaults(handler=_ensure_server)
 
+    p = db_commands.add_parser(
+        "setup", help="create the local database and its logins, then migrate it"
+    )
+    p.set_defaults(handler=_setup)
+
     p = db_commands.add_parser("migrate", help="apply pending migrations")
     p.set_defaults(handler=_migrate)
 
@@ -78,24 +83,43 @@ def _ensure_server(args: argparse.Namespace) -> int:
     return 0
 
 
+def _setup(args: argparse.Namespace) -> int:
+    settings = Settings()
+    admin_url = settings.require_admin_database_url()
+    migration_url = settings.require_migration_database_url()
+    app_url = settings.require_database_url()
+    print(f"Setting up {dbtools.describe(migration_url)}")
+    for step in dbtools.setup_local_database(admin_url, migration_url, app_url):
+        print(f"  {step}")
+    _apply_migrations(migration_url)
+    print(f"Ready. The app logs in as {dbtools.describe(app_url)}.")
+    return 0
+
+
 def _migrate(args: argparse.Namespace) -> int:
     url = Settings().require_migration_database_url()
     print(f"Migrating {dbtools.describe(url)}")
+    _apply_migrations(url)
+    return 0
+
+
+def _apply_migrations(url: str) -> None:
     done = migrations.migrate(
         url,
         on_applied=lambda m, seconds: print(f"  applied {m.filename} ({seconds:.1f}s)"),
         on_wait=lambda: print("  waiting for another migration to finish"),
     )
-    print(f"Applied {_plural(len(done), 'migration')}." if done else "Already up to date.")
-    return 0
+    print(f"  {_plural(len(done), 'migration')} applied" if done else "  already up to date")
 
 
 def _status(args: argparse.Namespace) -> int:
     url = Settings().require_migration_database_url()
     done, todo = migrations.status(url)
     print(f"{dbtools.describe(url)}: {len(done)} applied, {len(todo)} pending")
+    width = max(map(len, [a.filename for a in done] + [m.filename for m in todo]), default=0)
     for a in done:
-        print(f"  applied  {a.filename}  {a.applied_at.astimezone(UTC):%d %b %Y %H:%M} UTC")
+        when = a.applied_at.astimezone(UTC)
+        print(f"  applied  {a.filename.ljust(width)}  {when:%d %b %Y %H:%M} UTC")
     for m in todo:
         print(f"  pending  {m.filename}")
     return 0
