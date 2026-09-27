@@ -7,8 +7,9 @@ from collections.abc import Sequence
 from datetime import UTC
 
 import psycopg
+from pydantic import ValidationError
 
-from app.core import dbtools, migrations, sqltests
+from app.core import crypto, dbtools, migrations, sqltests
 from app.core.settings import ConfigError, Settings
 
 
@@ -30,6 +31,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"error: {e}", file=sys.stderr)
     except psycopg.OperationalError as e:
         print(f"error: couldn't connect to the database: {e}", file=sys.stderr)
+    except ValidationError as e:
+        print(f"error: the WFM_* settings aren't valid.\n{e}", file=sys.stderr)
     return 1
 
 
@@ -73,6 +76,9 @@ def _parser() -> argparse.ArgumentParser:
         help="the branch to compare with (default: origin/main)",
     )
     p.set_defaults(handler=_check_frozen)
+
+    p = commands.add_parser("generate-key", help="print a new key for WFM_TOKEN_ENCRYPTION_KEYS")
+    p.set_defaults(handler=_generate_key)
     return parser
 
 
@@ -169,6 +175,11 @@ def _check_frozen(args: argparse.Namespace) -> int:
         file=sys.stderr,
     )
     return 1
+
+
+def _generate_key(args: argparse.Namespace) -> int:
+    print(crypto.generate_key())
+    return 0
 
 
 def _plural(n: int, word: str) -> str:
