@@ -1,0 +1,3 @@
+# LF line endings everywhere, so migration checksums and shell scripts behave
+# the same on every machine.
+* text=auto eol=lf
