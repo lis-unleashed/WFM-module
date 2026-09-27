@@ -1,0 +1,7 @@
+# How many "PASS:" lines each SQL test file must print. `wfm db test` fails
+# if a count comes up short (a check has gone missing) or runs over (raise the
+# count when you add checks). Files run in this order.
+"test_schema.sql" = 26
+"test_schema_values.sql" = 10
+"test_0002_app_role.sql" = 28
+"test_0003_app_session.sql" = 11
