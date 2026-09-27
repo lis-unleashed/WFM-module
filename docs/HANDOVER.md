@@ -40,11 +40,11 @@ Because there's no call history yet, forecasting starts from business drivers (c
 - **Roster**: roster period → optimiser runs → positions ("Part-time 3") → shifts → activities (queue work, meal breaks, training). The optimiser creates positions; people are assigned to them afterwards.
 - **Time and attendance**: clock events (append-only), voids, timesheets, timesheet entries (rostered vs actual) and timesheet lines (minutes per pay category per day, which map to Xero earnings rates).
 
-## 4. Proposed architecture (confirm before building)
+## 4. Architecture (confirmed 27 Sep 2026, for Step 1)
 
-- **Backend**: Python 3.12 with FastAPI.
+- **Backend**: Python 3.12 with FastAPI, psycopg 3 and plain SQL (no ORM).
 - **Database**: PostgreSQL 16, with the `btree_gist` and `citext` extensions.
-- **Migrations**: SQL-first, because the schema is hand-written SQL. Use a runner that applies numbered `.sql` files in order (for example dbmate, or Alembic running raw SQL).
+- **Migrations**: SQL-first, because the schema is hand-written SQL. A small runner in `app/core/migrations.py` applies the numbered `.sql` files in order and refuses to run if an applied file has changed. dbmate was ruled out because it needs a `-- migrate:up` marker in every file, which would have meant editing `0001`.
 - **Background jobs**: a scheduler and worker for the Aircall and Xero syncs and the weekly planning run.
 - **Solver**: OR-Tools with SCIP for the roster optimiser.
 - **Front end**: a web app with a mobile-first staff side (roster, clock in/out) and a manager side (planning, publishing rosters, approvals), in Unleashed branding (section 10).
@@ -181,7 +181,7 @@ These come from the planner's default inputs. The backend port must reproduce th
 
 ## 8. Build order and when each step is done
 
-1. **Foundation**
+1. **Foundation** (done: `make check`; see the README)
    - Repo, a migration runner that applies `0001`, settings and secrets handling, an auth skeleton, and an audit-log helper.
    - CI runs `test_schema.sql` against a fresh PostgreSQL 16 and expects 26 PASS lines and no FAIL.
    - *Done when* a fresh clone sets up the database and runs green with one command.
