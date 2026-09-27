@@ -4,3 +4,4 @@
 "test_schema.sql" = 26
 "test_schema_values.sql" = 10
 "test_0002_app_role.sql" = 28
+"test_0003_app_session.sql" = 11
