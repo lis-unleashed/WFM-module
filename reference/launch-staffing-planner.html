@@ -1,0 +1,1319 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Launch staffing planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Unleashed brand: Catch Yellow + Siamese Grey as the primary pair, Pedigree Pink for things that
+   need attention, Food-bowl Blue for calm contrast, black and white neutrals, Geologica type. */
+:root {
+  --catch: #EAFF00; --siamese: #AAAAA3; --pink: #F926F9; --bowl: #08F4D7;
+  --bg: #FFFFFF; --surface: #FFFFFF; --ink: #000000; --muted: #5C5C56;
+  --line: #E0E0DC; --line-strong: #AAAAA3; --tint: #F2F2EF;
+  --board: #000000; --board-ink: #FFFFFF; --board-muted: #AAAAA3; --board-line: #2B2B29; --board-off: #1E1E1C; --board-edge: transparent;
+  --press-bg: #000000; --press-ink: #EAFF00;
+  --danger: #B3009F;
+  --font: "Geologica", "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #000000; --surface: #111110; --ink: #FFFFFF; --muted: #AAAAA3;
+    --line: #2B2B29; --line-strong: #55554F; --tint: #1C1C1B;
+    --board: #111110; --board-line: #2B2B29; --board-off: #222220; --board-edge: #2B2B29;
+    --press-bg: #EAFF00; --press-ink: #000000;
+    --danger: #FF8BFF;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #000000; --surface: #111110; --ink: #FFFFFF; --muted: #AAAAA3;
+  --line: #2B2B29; --line-strong: #55554F; --tint: #1C1C1B;
+  --board: #111110; --board-line: #2B2B29; --board-off: #222220; --board-edge: #2B2B29;
+  --press-bg: #EAFF00; --press-ink: #000000;
+  --danger: #FF8BFF;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: inherit; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
+
+/* Catch Yellow band across the top edge */
+.band { background: var(--catch); color: #000; }
+.band-inner { max-width: 1240px; margin: 0 auto; padding: 36px 24px 40px; }
+.masthead h1 { font-weight: 800; font-size: clamp(30px, 4.4vw, 44px); line-height: 1.05; letter-spacing: -0.02em; margin: 0; }
+.lede { max-width: 62ch; margin: 10px 0 0; font-size: 18px; line-height: 1.45; }
+.hero { display: flex; flex-wrap: wrap; gap: 24px 48px; align-items: flex-end; justify-content: space-between; margin-top: 36px; }
+.fte { margin: 0; font-weight: 800; font-size: clamp(84px, 12vw, 140px); line-height: 0.85; letter-spacing: -0.04em; }
+.fte-unit { font-size: 0.28em; font-weight: 700; font-style: italic; margin-left: 0.2em; letter-spacing: 0; }
+.hero-text { font-size: 20px; font-weight: 500; line-height: 1.35; margin: 16px 0 6px; max-width: 46ch; }
+.hero-sub { margin: 0; max-width: 64ch; color: #2E2E2B; }
+.band .control-label { color: #000; font-weight: 500; }
+.band .seg { border-color: #000; background: transparent; }
+.band .seg button { color: #000; }
+.band .seg button[aria-pressed="true"] { background: #000; color: var(--catch); }
+
+.page { max-width: 1240px; margin: 0 auto; padding: 40px 24px 64px; }
+.control-label { font-size: 14px; color: var(--muted); margin: 0 0 4px; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1.5px solid var(--ink); border-radius: 999px; padding: 3px; background: var(--surface); }
+.seg button { font: inherit; font-weight: 600; font-size: 15px; border: 0; background: transparent; color: var(--ink); padding: 6px 16px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--press-bg); color: var(--press-ink); }
+
+h2 { font-weight: 700; font-size: 24px; line-height: 1.2; letter-spacing: -0.01em; margin: 0 0 14px; }
+h3 { font-weight: 700; font-size: 18px; margin: 28px 0 8px; }
+.note { font-size: 14px; color: var(--muted); margin: 12px 0 0; max-width: 84ch; }
+
+/* Black boards for the data views */
+.board { background: var(--board); color: var(--board-ink); border: 1px solid var(--board-edge); border-radius: 18px; padding: 18px 18px 14px; }
+.legend { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--board-muted); }
+.legend .lead { color: var(--board-ink); font-weight: 600; }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.sw-closed { background: var(--board-off); outline: 1px solid #55554F; outline-offset: -1px; }
+.sw-idle { background: repeating-linear-gradient(45deg, var(--board) 0 2px, var(--siamese) 2px 3px); outline: 1px solid #55554F; outline-offset: -1px; }
+
+.grid-scroll, .table-scroll { position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch; }  /* relative: keeps hidden labels inside */
+table.week-grid { border-collapse: separate; border-spacing: 2px; min-width: 900px; width: 100%; table-layout: fixed; }
+.week-grid col.day-col { width: 48px; }
+.week-grid thead th { height: 22px; font-weight: 400; font-size: 12px; color: var(--board-muted); text-align: left; white-space: nowrap; overflow: visible; padding: 0; }
+.week-grid tbody th { font-weight: 600; font-size: 14px; text-align: left; padding: 0 6px 0 0; color: var(--board-ink); }
+.week-grid td { height: 36px; padding: 0; text-align: center; font-weight: 600; font-size: 13px; border-radius: 4px; }
+.week-grid tr.sel th { color: var(--catch); }
+.week-grid tbody tr { cursor: pointer; }
+.c-closed { background: var(--board-off); }
+.by-floor { background: var(--siamese); color: #000; }
+.by-live { background: var(--catch); color: #000; }
+.by-urgent { background: var(--pink); color: #000; }
+.by-email { background: var(--bowl); color: #000; }
+.by-routine { background: #FFFFFF; color: #000; }
+
+.workspace { display: grid; grid-template-columns: minmax(300px, 370px) minmax(0, 1fr); gap: 32px; margin-top: 44px; align-items: start; }
+.assumptions { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 18px; padding: 20px 20px 24px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); max-height: calc(100vh - 32px); overflow-y: auto; }
+@media (max-width: 920px) {
+  .workspace { grid-template-columns: minmax(0, 1fr); }
+  .assumptions { order: 2; position: static; max-height: none; }
+}
+.section { border-top: 1px solid var(--line); padding: 10px 0 6px; }
+.section:first-child { border-top: 0; padding-top: 0; }
+.section > summary { list-style: none; display: flex; align-items: baseline; gap: 10px; cursor: pointer; padding: 4px 0; }
+.section > summary::-webkit-details-marker { display: none; }
+.section > summary::before { content: ""; flex: none; width: 7px; height: 7px; border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink); transform: translateY(-2px) rotate(-45deg); }
+.section[open] > summary::before { transform: translateY(-3px) rotate(45deg); }
+@media (prefers-reduced-motion: no-preference) { .section > summary::before { transition: transform .15s; } }
+.sum-title { flex: 1; font-weight: 700; font-size: 16px; }
+.sum-note { font-size: 13px; font-weight: 500; color: var(--muted); white-space: nowrap; }
+.sum-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 7px; box-shadow: 0 0 0 1px var(--ink); }
+.subhead { font-weight: 700; font-size: 14px; margin: 16px 0 0; }
+.subhead + .hint { margin: 0; }
+.field { display: grid; grid-template-columns: minmax(0, 1fr) 100px; gap: 4px 10px; align-items: center; margin: 8px 0; }
+.field.stack { grid-template-columns: minmax(0, 1fr); }
+.field label { font-size: 15px; }
+.hint { grid-column: 1 / -1; font-size: 13px; color: var(--muted); margin: -2px 0 0; }
+.error { grid-column: 1 / -1; font-size: 13px; color: var(--danger); margin: 0; font-weight: 500; }
+.error:empty { display: none; }
+input, select { font: inherit; font-size: 15px; color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; padding: 6px 8px; width: 100%; min-width: 0; }
+input[type="number"] { text-align: right; }
+input[aria-invalid="true"] { border-color: var(--danger); border-width: 2px; }
+input:disabled { opacity: 0.45; }
+.hours-row { display: grid; grid-template-columns: 58px 22px minmax(0, 1fr) minmax(0, 1fr); gap: 6px; align-items: center; margin: 6px 0; font-size: 15px; }
+.hours-row input[type="checkbox"] { width: 18px; height: 18px; margin: 0; accent-color: #000; }
+.share-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-top: 6px; }
+.share-grid label { display: block; font-size: 13px; color: var(--muted); text-align: center; }
+.share-grid input { padding: 5px 2px; text-align: center; }
+.share-total { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+.reset, .mix-btn { font: inherit; font-weight: 600; background: transparent; color: var(--ink); border: 1.5px solid var(--ink); border-radius: 999px; cursor: pointer; }
+.reset { margin-top: 18px; font-size: 15px; padding: 7px 16px; }
+.mix-btn { font-size: 13px; padding: 2px 12px; }
+.reset:hover, .mix-btn:hover { background: var(--catch); color: #000; border-color: #000; }
+.mix-btn[aria-pressed="true"] { background: var(--press-bg); color: var(--press-ink); border-color: var(--press-bg); }
+
+.results { min-width: 0; display: flex; flex-direction: column; gap: 44px; }
+
+table.data { border-collapse: collapse; width: 100%; font-size: 15px; }
+.data th, .data td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.data th:first-child, .data td:first-child { text-align: left; }
+.data tbody th { font-weight: 400; white-space: normal; }
+.data thead th { font-weight: 600; font-size: 14px; color: var(--muted); vertical-align: bottom; }
+.data .sel { background: var(--tint); }
+.data thead th.sel { color: var(--ink); }
+.data tr.key th, .data tr.key td { font-weight: 700; }
+.data tr.total th, .data tr.total td { border-top: 2px solid var(--ink); }
+.data tr.sub th, .data tr.sub td { color: var(--muted); font-size: 14px; padding-top: 4px; padding-bottom: 4px; }
+.data tr.sub th { padding-left: 28px; }
+.data td.left { text-align: left; }
+.data tr.chosen th, .data tr.chosen td { background: var(--tint); }
+.table-note { font-size: 14px; color: var(--muted); margin: 10px 0 0; max-width: 84ch; }
+.best-tag { display: inline-block; margin-left: 8px; font-size: 12px; font-weight: 700; color: #000; background: var(--pink); border-radius: 999px; padding: 1px 9px; vertical-align: 1px; }
+
+.days { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.days button { font: inherit; font-size: 15px; font-weight: 600; border: 1.5px solid var(--ink); background: transparent; color: var(--ink); padding: 4px 13px; border-radius: 999px; cursor: pointer; }
+.days button[aria-pressed="true"] { background: var(--press-bg); color: var(--press-ink); border-color: var(--press-bg); }
+.chart-wrap { background: var(--board); border: 1px solid var(--board-edge); border-radius: 18px; padding: 16px 14px 10px; }
+.chart-wrap svg { display: block; width: 100%; height: auto; }
+.ch-grid { stroke: var(--board-line); stroke-width: 1; }
+.ch-label { fill: var(--board-muted); font-family: var(--font); font-size: 12px; }
+.ch-live { fill: var(--catch); } .ch-email { fill: var(--bowl); } .ch-urgent { fill: var(--pink); } .ch-routine { fill: #FFFFFF; }
+.ch-idle { stroke: none; }
+.ch-idle-bg { fill: var(--board); } .ch-idle-line { stroke: var(--siamese); stroke-width: 1; }
+.ch-roster { fill: none; stroke: var(--pink); stroke-width: 2.5; stroke-linejoin: round; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 14px; color: var(--board-muted); margin: 10px 4px 0; padding: 0; list-style: none; }
+.key-line { display: inline-block; width: 18px; height: 0; border-top: 3px solid var(--pink); margin-right: 6px; vertical-align: 3px; }
+.day-summary { margin: 12px 0 0; color: var(--muted); font-size: 15px; max-width: 84ch; }
+details.more { margin-top: 14px; }
+details.more > summary { cursor: pointer; font-weight: 600; color: var(--ink); text-decoration: underline; text-decoration-color: var(--pink); text-decoration-thickness: 2px; text-underline-offset: 5px; }
+.closed-msg { padding: 40px 12px; text-align: center; color: var(--board-muted); }
+.method { font-size: 15px; color: var(--muted); max-width: 80ch; }
+.method h2 { color: var(--ink); }
+.method p { margin: 0 0 10px; }
+
+.roster-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+.roster-status { font-size: 14px; color: var(--muted); margin: 0; }
+.roster-status.busy::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--pink); margin-right: 8px; vertical-align: 1px; }
+@media (prefers-reduced-motion: no-preference) { .roster-status.busy::before { animation: pulse 1s ease-in-out infinite alternate; } }
+@keyframes pulse { from { opacity: 1; } to { opacity: 0.25; } }
+.roster-lead { font-size: 18px; font-weight: 500; margin: 4px 0 16px; max-width: 62ch; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px 20px; margin: 0 0 20px; }
+.stats div { border-top: 2px solid var(--ink); padding-top: 8px; }
+.stats dt { font-size: 13px; color: var(--muted); }
+.stats dd { margin: 2px 0 0; font-weight: 700; font-size: 26px; line-height: 1.15; letter-spacing: -0.01em; }
+.stats dd small { display: block; font-weight: 400; font-size: 13px; letter-spacing: 0; color: var(--muted); }
+table.roster td { text-align: left; vertical-align: top; font-size: 13px; line-height: 1.3; min-width: 72px; padding: 7px 8px; white-space: nowrap; }
+table.roster thead th { text-align: left; }
+table.roster td.on { background: var(--catch); color: #000; border-bottom-color: var(--bg); }
+table.roster td .hrs { display: block; font-size: 12px; color: #3F3F3A; }
+table.roster td.num, table.roster th.num { text-align: right; }
+table.roster tbody th { white-space: nowrap; font-weight: 600; }
+.roster-error { color: var(--danger); font-size: 15px; font-weight: 500; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
+</head>
+<body>
+<header class="band">
+  <div class="band-inner">
+  <div class="masthead">
+    <h1>Launch staffing planner</h1>
+    <p class="lede">The team we need to look after every call, chat, email and claim, 15 minutes at a time. One cross-skilled crew, with each kind of work getting the speed it deserves.</p>
+  </div>
+
+  <section class="hero" aria-live="polite">
+    <div>
+      <p class="fte"><span id="fte-value">0</span><span class="fte-unit">FTE</span></p>
+      <p id="hero-text" class="hero-text"></p>
+      <p id="hero-sub" class="hero-sub"></p>
+      <p id="hero-roster" class="hero-sub" style="margin-top:6px;font-weight:600;color:#000"></p>
+    </div>
+    <div>
+      <p class="control-label" id="scenario-label">Scenario</p>
+      <div class="seg" role="group" aria-labelledby="scenario-label" id="scenario-seg">
+        <button type="button" data-scenario="low" aria-pressed="false">Low</button>
+        <button type="button" data-scenario="expected" aria-pressed="true">Expected</button>
+        <button type="button" data-scenario="high" aria-pressed="false">High</button>
+      </div>
+    </div>
+  </section>
+  </div>
+</header>
+
+<main class="page">
+  <section aria-labelledby="week-title">
+    <h2 id="week-title">People needed at once, every 15 minutes</h2>
+    <div class="board">
+    <ul class="legend">
+      <li class="lead">Set by</li>
+      <li><span class="sw by-floor" aria-hidden="true"></span>Minimum cover</li>
+      <li><span class="sw by-live" aria-hidden="true"></span>Calls and chats</li>
+      <li><span class="sw by-urgent" aria-hidden="true"></span>Urgent claims</li>
+      <li><span class="sw by-email" aria-hidden="true"></span>Emails</li>
+      <li><span class="sw by-routine" aria-hidden="true"></span>Routine claims</li>
+      <li><span class="sw sw-closed" aria-hidden="true"></span>Closed</li>
+    </ul>
+    <div class="grid-scroll"><table class="week-grid" id="week-grid"></table></div>
+    </div>
+    <p class="note">One cross-skilled team, in Sydney/Melbourne time. Each number is people working at once; the colour shows which service level sets it. Hover a cell for its mix of work, or select a day for detail. Breaks and absence come on top, in the FTE figures.</p>
+  </section>
+
+  <div class="workspace">
+    <aside class="assumptions" aria-labelledby="assumptions-title">
+      <h2 id="assumptions-title">Assumptions</h2>
+      <form id="form" novalidate onsubmit="return false">
+        <div id="form-body"></div>
+        <button type="button" class="reset" id="reset">Reset to starting values</button>
+      </form>
+    </aside>
+
+    <div class="results">
+      <section aria-labelledby="roster-title">
+        <div class="roster-head">
+          <h2 id="roster-title">Roster that fits</h2>
+          <p class="roster-status" id="roster-status" aria-live="polite"></p>
+        </div>
+        <p class="roster-lead" id="roster-lead"></p>
+        <dl class="stats" id="roster-stats"></dl>
+        <div class="table-scroll"><table class="data roster" id="roster-table"></table></div>
+        <p class="table-note" id="roster-note"></p>
+        <h3 id="mix-title">Every mix of full-time and part-time</h3>
+        <div class="table-scroll"><table class="data" id="mix-table" aria-labelledby="mix-title"></table></div>
+        <p class="table-note">Each row is the fewest part-timers that cover every 15 minutes alongside that many full-timers. Choose a row to see its roster.</p>
+      </section>
+
+      <section aria-labelledby="breakdown-title">
+        <h2 id="breakdown-title">Where the time goes</h2>
+        <div class="table-scroll"><table class="data" id="breakdown"></table></div>
+        <p class="table-note">Work hours are time spent handling contacts and claims. Staffed hours are time people are on shift for that work, including waiting for the next item. Separate-team figures show what each workstream would need with its own people. FTE adds breaks, training and absence.</p>
+      </section>
+
+      <section aria-labelledby="compare-title">
+        <h2 id="compare-title">Scenarios compared</h2>
+        <div class="table-scroll"><table class="data" id="summary"></table></div>
+      </section>
+
+      <section aria-labelledby="day-title">
+        <h2 id="day-title">Day detail</h2>
+        <div class="days" id="day-tabs" role="group" aria-label="Day"></div>
+        <div class="chart-wrap">
+          <div id="chart"></div>
+          <ul class="chart-legend">
+            <li><span class="sw by-live" aria-hidden="true"></span>Calls and chats</li>
+            <li><span class="sw by-urgent" aria-hidden="true"></span>Urgent claims</li>
+            <li><span class="sw by-email" aria-hidden="true"></span>Emails</li>
+            <li><span class="sw by-routine" aria-hidden="true"></span>Routine claims</li>
+            <li><span class="sw sw-idle" aria-hidden="true"></span>Ready for the next item</li>
+            <li><span class="key-line" aria-hidden="true"></span>Rostered on the floor</li>
+          </ul>
+        </div>
+        <p class="day-summary" id="day-summary"></p>
+
+        <details class="more">
+          <summary id="intervals-toggle">Show every interval</summary>
+          <div class="table-scroll"><table class="data" id="intervals"></table></div>
+        </details>
+      </section>
+
+      <section aria-labelledby="method-title" class="method">
+        <h2 id="method-title">How this is worked out</h2>
+        <p>Calls, chats and emails are active customers × contacts per customer each month × the launch uplift. Claims use their own rate with no uplift, split into urgent and routine. Every volume is spread across open days by your weekday shares, then across each day by its own pattern, and moves with the low and high range.</p>
+        <p>Every workstream is sized with Erlang C against its own target. Chat time is divided by the chats handled at once. Routine claims count each lodgement, chase and completion as a separate piece of work. An urgent claim is handled start to finish in one go.</p>
+        <p>Because everyone is cross-skilled, the team works the most urgent item first. For each 15 minutes, the planner checks each service level in order of how quickly work must be started. It sizes the team for that work plus everything more urgent, then takes the largest answer, never below minimum cover and never above the occupancy cap. This is a standard planning approximation, and real results are worth checking against actuals once you're live.</p>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+// Roster engine: covers each 15-minute requirement with full-time and part-time shifts,
+// minimising paid hours. Validated against an exact integer-programming model.
+// Roster optimiser: covers a 15-minute requirement with full-time and part-time shifts,
+// minimising paid hours. Simulated annealing over individual weekly schedules.
+function makeRng(seed) {
+  return function () {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// days: 7 arrays of { t (minutes from midnight), N (people needed) }
+// rules (in 15-minute slots): ftLen, ftDays, ptWeek, ptMinDays, ptMinLen, ptMaxLen, meal, mealAfter
+function rosterProblem(days, rules) {
+  var D = days.map(function (ds) {
+    if (!ds.length) return null;
+    return { o: ds[0].t / 15, c: ds[ds.length - 1].t / 15 + 1, req: ds.map(function (s) { return s.N; }) };
+  });
+  var R = 0, peak = 0;
+  D.forEach(function (x) { if (x) x.req.forEach(function (v) { R += v; if (v > peak) peak = v; }); });
+  var ru = Object.assign({}, rules);
+  ru.ptMaxDays = Math.min(7, Math.floor(ru.ptWeek / ru.ptMinLen));
+  return { D: D, R: R, peak: peak, rules: ru };
+}
+
+function spanOf(ru, len) { return len + (len > ru.mealAfter ? ru.meal : 0); }
+function mealWindow(ru, span, len) {
+  if (!(len > ru.mealAfter)) return null;
+  var lo = Math.max(4, span - ru.meal - ru.mealAfter), hi = Math.min(ru.mealAfter, span - ru.meal - 4);
+  if (lo > hi) { var mid = Math.round((span - ru.meal) / 2); lo = hi = mid; }
+  return [lo, hi];
+}
+function dayCap(prob, d) {   // longest paid length that fits the day's opening hours
+  var x = prob.D[d]; if (!x) return 0;
+  var open = x.c - x.o, len = open;
+  while (len > 0 && spanOf(prob.rules, len) > open) len--;
+  return len;
+}
+
+function RosterState(prob, rng) {
+  this.prob = prob; this.rng = rng; this.persons = [];
+  this.cov = prob.D.map(function (x) { return x ? new Int16Array(x.c - x.o) : null; });
+  this.W_U = 100; this.W_O = 1; this.W_R = 2;
+  this.U = 0; this.O2 = 0; this.reg = 0;
+  var self = this;
+  prob.D.forEach(function (x, d) { if (x) x.req.forEach(function (v) { self.U += v; }); });
+}
+RosterState.prototype.cost = function () { return this.W_U * this.U + this.W_O * this.O2 + this.W_R * this.reg; };
+RosterState.prototype.apply = function (d, sh, sign) {
+  var x = this.prob.D[d], ru = this.prob.rules, cov = this.cov[d];
+  var span = spanOf(ru, sh.len);
+  for (var k = 0; k < span; k++) {
+    if (sh.m >= 0 && k >= sh.m && k < sh.m + ru.meal) continue;
+    var i = sh.s - x.o + k, r = x.req[i], before = cov[i], after = before + sign;
+    var uB = r > before ? r - before : 0, uA = r > after ? r - after : 0;
+    var oB = before > r ? before - r : 0, oA = after > r ? after - r : 0;
+    this.U += uA - uB; this.O2 += oA * oA - oB * oB;
+    cov[i] = after;
+  }
+};
+function regularity(sh) {
+  var seen = {}, n = 0, worked = 0;
+  for (var d = 0; d < 7; d++) if (sh[d]) { worked++; if (!seen[sh[d].s]) { seen[sh[d].s] = 1; n++; } }
+  return worked ? n - 1 : 0;
+}
+RosterState.prototype.setPerson = function (p, sh) {
+  for (var d = 0; d < 7; d++) {
+    var a = p.sh[d], b = sh[d];
+    if (a === b) continue;
+    if (a) this.apply(d, a, -1);
+    if (b) this.apply(d, b, +1);
+  }
+  this.reg += regularity(sh) - regularity(p.sh);
+  p.sh = sh;
+};
+
+RosterState.prototype.newShift = function (d, len) {
+  var ru = this.prob.rules, x = this.prob.D[d], span = spanOf(ru, len);
+  var s = x.o + Math.floor(this.rng() * (x.c - x.o - span + 1));
+  var w = mealWindow(ru, span, len);
+  return { s: s, len: len, m: w ? w[0] + Math.floor(this.rng() * (w[1] - w[0] + 1)) : -1 };
+};
+RosterState.prototype.fixShift = function (d, sh) {    // clamp start and meal after a length change
+  var ru = this.prob.rules, x = this.prob.D[d], span = spanOf(ru, sh.len);
+  var s = Math.min(Math.max(sh.s, x.o), x.c - span);
+  var w = mealWindow(ru, span, sh.len), m = -1;
+  if (w) m = sh.m >= 0 ? Math.min(Math.max(sh.m, w[0]), w[1]) : Math.round((w[0] + w[1]) / 2);
+  return { s: s, len: sh.len, m: m };
+};
+RosterState.prototype.randomPattern = function (type) {
+  var prob = this.prob, ru = prob.rules, rng = this.rng, sh = [null, null, null, null, null, null, null];
+  function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(rng() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  if (type === "ft") {
+    var fd = []; for (var d = 0; d < 7; d++) if (dayCap(prob, d) >= ru.ftLen) fd.push(d);
+    if (fd.length < ru.ftDays) return null;
+    shuffle(fd).slice(0, ru.ftDays).forEach(function (d) { sh[d] = this.newShift(d, ru.ftLen); }, this);
+    return sh;
+  }
+  var feas = []; for (var d2 = 0; d2 < 7; d2++) if (dayCap(prob, d2) >= ru.ptMinLen) feas.push(d2);
+  for (var attempt = 0; attempt < 20; attempt++) {
+    var kmax = Math.min(ru.ptMaxDays, feas.length);
+    if (kmax < ru.ptMinDays) return null;
+    var k = ru.ptMinDays + Math.floor(rng() * (kmax - ru.ptMinDays + 1));
+    var chosen = shuffle(feas.slice()).slice(0, k);
+    var lens = chosen.map(function () { return ru.ptMinLen; });
+    var caps = chosen.map(function (d) { return Math.min(ru.ptMaxLen, dayCap(prob, d)); });
+    var left = ru.ptWeek - k * ru.ptMinLen, guard = 0;
+    while (left > 0 && guard++ < 500) {
+      var i = Math.floor(rng() * k);
+      if (lens[i] < caps[i]) { lens[i]++; left--; }
+      if (caps.every(function (c, j) { return lens[j] >= c; })) break;
+    }
+    if (left !== 0) continue;
+    chosen.forEach(function (d, i) { sh[d] = this.newShift(d, lens[i]); }, this);
+    return sh;
+  }
+  return null;
+};
+
+RosterState.prototype.propose = function (p) {
+  var prob = this.prob, ru = prob.rules, rng = this.rng, sh = p.sh.slice();
+  var worked = []; for (var d = 0; d < 7; d++) if (sh[d]) worked.push(d);
+  if (!worked.length) return null;
+  function pick(a) { return a[Math.floor(rng() * a.length)]; }
+  var r = rng(), x, dd;
+  if (this.U > 0 && rng() < 0.3) return this.repair(p, sh, worked);
+  if (r < 0.34) {                                   // slide a shift earlier or later
+    dd = pick(worked); x = sh[dd];
+    sh[dd] = this.fixShift(dd, { s: x.s + pick([-4, -2, -1, 1, 2, 4]), len: x.len, m: x.m });
+  } else if (r < 0.50) {                            // move a meal break
+    dd = pick(worked); x = sh[dd];
+    var w = mealWindow(ru, spanOf(ru, x.len), x.len); if (!w || w[0] === w[1]) return null;
+    sh[dd] = { s: x.s, len: x.len, m: Math.min(Math.max(x.m + pick([-2, -1, 1, 2]), w[0]), w[1]) };
+  } else if (r < 0.68) {                            // move a shift to a day off
+    dd = pick(worked); x = sh[dd];
+    var free = []; for (var e = 0; e < 7; e++) if (!sh[e] && dayCap(prob, e) >= x.len) free.push(e);
+    if (!free.length) return null;
+    var to = pick(free); sh[to] = this.newShift(to, x.len); sh[dd] = null;
+    if (rng() < 0.5) sh[to] = this.fixShift(to, { s: x.s, len: x.len, m: x.m });
+  } else if (p.type === "pt" && r < 0.86) {         // move time between two of a part-timer's shifts
+    if (worked.length < 2) return null;
+    var a = pick(worked), b = pick(worked); if (a === b) return null;
+    var k = pick([1, 2, 4]);
+    if (sh[a].len - k < ru.ptMinLen || sh[b].len + k > Math.min(ru.ptMaxLen, dayCap(prob, b))) return null;
+    sh[a] = this.fixShift(a, { s: sh[a].s, len: sh[a].len - k, m: sh[a].m });
+    sh[b] = this.fixShift(b, { s: sh[b].s - (rng() < 0.5 ? k : 0), len: sh[b].len + k, m: sh[b].m });
+  } else if (p.type === "pt") {                     // try a different weekly pattern
+    var np = this.randomPattern("pt"); if (!np) return null; sh = np;
+  } else return null;
+  return sh;
+};
+
+// Targeted move: pull one of this person's shifts over a slot that's short of people
+RosterState.prototype.repair = function (p, sh, worked) {
+  var prob = this.prob, ru = prob.rules, rng = this.rng, short = [];
+  for (var d = 0; d < 7; d++) {
+    var x = prob.D[d]; if (!x) continue;
+    for (var i = 0; i < x.req.length; i++) if (this.cov[d][i] < x.req[i]) short.push([d, i]);
+  }
+  if (!short.length) return null;
+  var target = short[Math.floor(rng() * short.length)], d0 = target[0], slot = prob.D[d0].o + target[1];
+  var from = sh[d0] ? d0 : worked[Math.floor(rng() * worked.length)];
+  var len = sh[from].len;
+  if (from !== d0) {
+    if (dayCap(prob, d0) < len) {
+      if (p.type !== "pt") return null;
+      len = Math.max(ru.ptMinLen, Math.min(len, dayCap(prob, d0)));
+      if (len !== sh[from].len) return null;    // keep weekly hours exact
+    }
+  }
+  var span = spanOf(ru, len), x0 = prob.D[d0];
+  var lo = Math.max(x0.o, slot - span + 1), hi = Math.min(x0.c - span, slot);
+  if (lo > hi) return null;
+  var s = lo + Math.floor(rng() * (hi - lo + 1));
+  var w = mealWindow(ru, span, len), m = -1;
+  if (w) {
+    var ok = [];
+    for (var mo = w[0]; mo <= w[1]; mo++) if (!(slot >= s + mo && slot < s + mo + ru.meal)) ok.push(mo);
+    if (!ok.length) return null;
+    m = ok[Math.floor(rng() * ok.length)];
+  }
+  sh[from] = null;
+  sh[d0] = { s: s, len: len, m: m };
+  return sh;
+};
+
+RosterState.prototype.addPerson = function (type) {
+  var sh = this.randomPattern(type); if (!sh) return false;
+  var p = { type: type, sh: [null, null, null, null, null, null, null] };
+  this.persons.push(p); this.setPerson(p, sh); return true;
+};
+
+RosterState.prototype.anneal = function (iters, T0, T1, stopWhenCovered) {
+  var n = this.persons.length; if (!n) return;
+  var best = this.cost(), bestSnap = this.snapshot();
+  for (var it = 0; it < iters; it++) {
+    var T = T0 * Math.pow(T1 / T0, it / iters);
+    var p = this.persons[Math.floor(this.rng() * n)], old = p.sh, prop = this.propose(p);
+    if (!prop) continue;
+    var c0 = this.cost(); this.setPerson(p, prop); var delta = this.cost() - c0;
+    if (delta > 0 && this.rng() >= Math.exp(-delta / T)) this.setPerson(p, old);
+    else { var c = this.cost(); if (c < best) { best = c; bestSnap = this.snapshot(); } }
+    if (stopWhenCovered && this.U === 0) return;
+  }
+  this.restore(bestSnap);
+};
+RosterState.prototype.snapshot = function () { return this.persons.map(function (p) { return p.sh.slice(); }); };
+RosterState.prototype.restore = function (snap) { var self = this; snap.forEach(function (sh, i) { self.setPerson(self.persons[i], sh); }); };
+
+function paidSlots(prob, F, P) { return F * prob.rules.ftLen * prob.rules.ftDays + P * prob.rules.ptWeek; }
+
+// For a fixed number of full-timers, find the fewest part-timers that cover every interval.
+// Phase 1 searches for coverage only; phase 2 then spreads surplus and evens out start times.
+function mixLowerBound(prob, F) {
+  var ru = prob.rules;
+  var lb = Math.max(0, Math.ceil((prob.R - F * ru.ftLen * ru.ftDays) / ru.ptWeek));
+  prob.D.forEach(function (x, d) {
+    if (x) { var pk = Math.max.apply(null, x.req); lb = Math.max(lb, pk - (dayCap(prob, d) >= ru.ftLen ? F : 0)); }
+  });
+  return lb;
+}
+function buildState(prob, F, P, seed) {
+  var st = new RosterState(prob, makeRng(seed));
+  for (var i = 0; i < F; i++) if (!st.addPerson("ft")) return null;
+  for (var j = 0; j < P; j++) if (!st.addPerson("pt")) return null;
+  return st;
+}
+// One search attempt for a fixed mix: anneal for coverage, then iterated local search kicks.
+function attemptMix(prob, F, P, seed, iters, kicks) {
+  var st = buildState(prob, F, P, seed);
+  if (!st) return null;
+  st.W_O = 0; st.W_R = 2;
+  st.anneal(iters, 60, 0.05, true);
+  var pts = st.persons.filter(function (q) { return q.type === "pt"; });
+  for (var kick = 0; kick < kicks && st.U > 0 && pts.length; kick++) {
+    for (var j = 0; j < 2; j++) {                     // reshuffle two part-timers' weeks, then search again
+      var q = pts[Math.floor(st.rng() * pts.length)], nsh = st.randomPattern("pt");
+      if (nsh) st.setPerson(q, nsh);
+    }
+    st.anneal(Math.round(iters / 2), 25, 0.05, true);
+  }
+  if (st.U !== 0) return null;
+  st.W_O = 1; st.W_R = 2;                             // polish: spread surplus, even out start times
+  st.anneal(Math.round(iters * 0.6), 4, 0.02, false);
+  return { F: F, P: P, state: st, paid: paidSlots(prob, F, P) };
+}
+
+// Incremental search, so a page can show a quick answer and keep improving it.
+// Pass 1 finds a workable roster for every mix. Pass 2 spends extra effort only on mixes that
+// could still beat the best paid hours found so far.
+function RosterSearch(prob, opts) {
+  this.prob = prob;
+  this.opts = Object.assign({ quickIters: 12000, quickKicks: 3, hardIters: 20000, hardKicks: 10, hardSeeds: 3 }, opts || {});
+  var ru = prob.rules, fit = 0;
+  for (var d = 0; d < 7; d++) if (dayCap(prob, d) >= ru.ftLen) fit++;
+  this.ftDaysFit = fit;
+  this.Fmax = fit >= ru.ftDays && ru.ftDays > 0 ? Math.ceil(prob.R / (ru.ftLen * ru.ftDays)) : 0;
+  this.lb = {}; this.mix = {}; this.queue = []; this.hardDone = {}; this.pass = 1; this.done = false;
+  for (var F = 0; F <= this.Fmax; F++) { this.lb[F] = mixLowerBound(prob, F); this.queue.push({ F: F, P: this.lb[F], k: 0, hard: false }); }
+  var self = this;
+  this.queue.sort(function (a, b) { return paidSlots(prob, a.F, a.P) - paidSlots(prob, b.F, b.P); });
+  this.totalSteps = this.queue.length;
+  this.steps = 0;
+}
+RosterSearch.prototype.bestPaid = function () {
+  var b; for (var F in this.mix) if (b === undefined || this.mix[F].paid < b) b = this.mix[F].paid; return b;
+};
+RosterSearch.prototype.step = function () {
+  if (this.done) return true;
+  var t = this.queue.shift(), prob = this.prob, o = this.opts;
+  if (!t) {
+    if (this.pass === 1) { this.pass = 2; this.planHard(); if (this.queue.length) return false; }
+    this.done = true; return true;
+  }
+  this.steps++;
+  if (t.P > this.lb[t.F] + 8) return false;                       // give up on this mix
+  if (t.hard) {
+    var best = this.bestPaid();
+    if (best !== undefined && paidSlots(prob, t.F, t.P) > best) return false;   // can no longer win
+  }
+  var seed = 7919 * (t.F + 1) + 104729 * t.P + 31 * t.k;
+  var sol = attemptMix(prob, t.F, t.P, seed, t.hard ? o.hardIters : o.quickIters, t.hard ? o.hardKicks : o.quickKicks);
+  if (sol) {
+    var cur = this.mix[t.F];
+    if (!cur || sol.P < cur.P || (sol.P === cur.P && sol.state.O2 < cur.state.O2)) this.mix[t.F] = sol;
+    if (t.hard && sol.P - 1 >= this.lb[t.F]) this.queue.unshift({ F: t.F, P: sol.P - 1, k: 0, hard: true });
+  } else if (!t.hard) {
+    this.queue.unshift({ F: t.F, P: t.P + 1, k: 0, hard: false });   // quick pass: step up until it works
+    this.totalSteps++;
+  } else if (t.k + 1 < o.hardSeeds) {
+    this.queue.unshift({ F: t.F, P: t.P, k: t.k + 1, hard: true });
+  }
+  return false;
+};
+RosterSearch.prototype.planHard = function () {
+  var best = this.bestPaid(), prob = this.prob, list = [];
+  for (var F in this.mix) {
+    var m = this.mix[F];
+    if (m.P > this.lb[F] && paidSlots(prob, +F, m.P - 1) <= best) list.push({ F: +F, P: m.P - 1, k: 0, hard: true });
+  }
+  list.sort(function (a, b) { return paidSlots(prob, a.F, a.P) - paidSlots(prob, b.F, b.P); });
+  this.queue = list;
+  this.totalSteps += list.length * this.opts.hardSeeds;
+};
+RosterSearch.prototype.result = function () {
+  var list = Object.keys(this.mix).map(function (F) { return this.mix[F]; }, this);
+  list.sort(function (a, b) { return a.paid - b.paid || (a.F + a.P) - (b.F + b.P) || a.state.O2 - b.state.O2; });
+  return { mixes: list, best: list[0] || null, ftDaysFit: this.ftDaysFit, done: this.done, pass: this.pass };
+};
+function optimiseRoster(prob, opts) {
+  var s = new RosterSearch(prob, opts);
+  while (!s.step()) { /* run to completion */ }
+  return s.result();
+}
+
+
+</script>
+<script>
+(function () {
+  "use strict";
+
+  var DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  var SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  var SCENARIOS = ["low", "expected", "high"];
+  var SCENARIO_NAMES = { low: "Low", expected: "Expected", high: "High" };
+  var STREAMS = ["live", "email", "urgent", "routine"];
+  var NAMES = { live: "Calls and chats", email: "Emails", urgent: "Urgent claims", routine: "Routine claims", floor: "Minimum cover" };
+  var PATTERNS = { morning: "Morning peak, quieter evenings", even: "Even across the day", evening: "Busier after work" };
+  var STORE_KEY = "launch-staffing-planner-v4";
+  var OLD_KEYS = ["launch-staffing-planner-v3", "launch-staffing-planner-v2", "launch-staffing-planner-v1"];
+
+  var DEFAULTS = {
+    customers: 10000, uplift: 50, spread: 30,
+    callRate: 10, callAht: 7, chatRate: 4, chatAht: 12, chatConc: 2, slTarget: 80, slSeconds: 20, livePattern: "morning",
+    emailRate: 5, emailAht: 8, emailSl: 80, emailHrs: 4, emailPattern: "even",
+    claimRate: 3, urgentPct: 20, urgentAht: 25, urgentSl: 90, urgentMins: 10,
+    lodgeAht: 10, chasePct: 40, chasesPer: 1.5, chaseAht: 8, completeAht: 20, routineSl: 80, routineHrs: 24, claimPattern: "morning",
+    floor: 2, maxOcc: 85, unplanned: 10, planned: 15, fteHours: 38,
+    ftPaid: 7.5, ftDays: 5, ptWeek: 20, ptMinDays: 3, ptMinShift: 5, ptMaxShift: 7.5, mealMins: 30, mealAfter: 5,
+    hours: [
+      { open: true, from: "09:00", to: "21:00" }, { open: true, from: "09:00", to: "21:00" },
+      { open: true, from: "09:00", to: "21:00" }, { open: true, from: "09:00", to: "21:00" },
+      { open: true, from: "09:00", to: "21:00" },
+      { open: true, from: "10:00", to: "15:00" }, { open: true, from: "10:00", to: "15:00" }
+    ],
+    shares: [19, 18, 17, 16, 15, 8, 7]
+  };
+
+  // Field: [key, label, hint, step, min, max, error, integerOnly]. Subheading: ["_sub", title, hint]
+  var PCT = function (lo, hi) { return "Enter between " + lo + " and " + hi + "%."; };
+  var SECTIONS = [
+    { id: "shared", title: "Customers and scenarios", fields: [
+      ["customers", "Active customers", "", 100, 0, 10000000, "Enter 0 or more customers."],
+      ["uplift", "Launch uplift on contacts (%)", "Extra calls, chats and emails while customers learn the product.", 5, 0, 500, PCT(0, 500)],
+      ["spread", "Low and high range (± %)", "", 5, 0, 90, PCT(0, 90)]
+    ]},
+    { id: "live", title: "Calls and chats", dot: "var(--catch)", patternKey: "livePattern", fields: [
+      ["callRate", "Calls per customer per month (%)", "10% means one call a month for every 10 customers.", 0.5, 0, 500, PCT(0, 500)],
+      ["callAht", "Call handle time (minutes)", "Talk, hold and wrap-up together.", 0.5, 0.5, 120, "Enter between 0.5 and 120 minutes."],
+      ["chatRate", "Chats per customer per month (%)", "", 0.5, 0, 500, PCT(0, 500)],
+      ["chatAht", "Chat handle time (minutes)", "From first reply to close, for one chat.", 0.5, 0.5, 120, "Enter between 0.5 and 120 minutes."],
+      ["chatConc", "Chats handled at once", "At 2, each chat takes half a person's time.", 0.5, 1, 6, "Enter between 1 and 6."],
+      ["slTarget", "Service level target (%)", "", 1, 1, 99.9, PCT(1, 99.9)],
+      ["slSeconds", "Answered within (seconds)", "", 5, 0, 3600, "Enter 0 to 3,600 seconds."]
+    ]},
+    { id: "email", title: "Emails", dot: "var(--bowl)", patternKey: "emailPattern", fields: [
+      ["emailRate", "Emails per customer per month (%)", "", 0.5, 0, 500, PCT(0, 500)],
+      ["emailAht", "Handle time per email (minutes)", "", 0.5, 0.5, 240, "Enter between 0.5 and 240 minutes."],
+      ["emailSl", "Service level target (%)", "", 1, 1, 99.9, PCT(1, 99.9)],
+      ["emailHrs", "Started within (hours)", "Time until someone picks it up.", 0.25, 0.25, 72, "Enter between 0.25 and 72 hours."]
+    ]},
+    { id: "claims", title: "Claims", dot: "var(--pink)", patternKey: "claimPattern", fields: [
+      ["claimRate", "Claims per customer per month (%)", "", 0.5, 0, 100, PCT(0, 100)],
+      ["_sub", "Urgent claims", "Customer at the vet, waiting for payment or pre-approval."],
+      ["urgentPct", "Share of claims that are urgent (%)", "", 5, 0, 100, PCT(0, 100)],
+      ["urgentAht", "Minutes per urgent claim, start to finish", "", 1, 0.5, 240, "Enter between 0.5 and 240 minutes."],
+      ["urgentSl", "Service level target (%)", "", 1, 1, 99.9, PCT(1, 99.9)],
+      ["urgentMins", "Started within (minutes)", "The customer's total wait adds the handling time.", 1, 0, 240, "Enter between 0 and 240 minutes."],
+      ["_sub", "Routine claims", ""],
+      ["lodgeAht", "Lodging: minutes per claim", "Registering and triaging a new claim.", 1, 0, 240, "Enter between 0 and 240 minutes."],
+      ["chasePct", "Claims that need chasing (%)", "", 5, 0, 100, PCT(0, 100)],
+      ["chasesPer", "Chases per chased claim", "", 0.5, 0, 10, "Enter between 0 and 10."],
+      ["chaseAht", "Chasing: minutes per chase", "Following up for missing details or documents.", 1, 0, 240, "Enter between 0 and 240 minutes."],
+      ["completeAht", "Completing: minutes per claim", "Assessment, decision and payment.", 1, 0, 480, "Enter between 0 and 480 minutes."],
+      ["routineSl", "Service level target (%)", "", 1, 1, 99.9, PCT(1, 99.9)],
+      ["routineHrs", "Started within (hours)", "", 0.25, 0.25, 168, "Enter between 0.25 and 168 hours."]
+    ]},
+    { id: "team", title: "Team", fields: [
+      ["floor", "Minimum people on while open", "Everyone is cross-skilled, so this covers all work.", 1, 0, 50, "Enter a whole number from 0 to 50.", true],
+      ["maxOcc", "Maximum occupancy (%)", "Caps how busy people are, across all work.", 1, 10, 100, PCT(10, 100)],
+      ["unplanned", "Absence and sick leave (%)", "", 1, 0, 60, PCT(0, 60)],
+      ["planned", "Breaks, training and meetings (%)", "", 1, 0, 60, PCT(0, 60)],
+      ["fteHours", "Hours per FTE each week", "", 0.5, 1, 60, "Enter between 1 and 60 hours."]
+    ]},
+    { id: "rules", title: "Rostering rules", fields: [
+      ["_sub", "Full-time", ""],
+      ["ftPaid", "Paid hours per shift", "", 0.25, 3, 10, "Enter between 3 and 10 hours, in quarter hours.", false, true],
+      ["ftDays", "Days a week", "", 1, 1, 6, "Enter a whole number from 1 to 6.", true],
+      ["_sub", "Part-time", ""],
+      ["ptWeek", "Hours a week", "", 0.25, 4, 37.5, "Enter between 4 and 37.5 hours, in quarter hours.", false, true],
+      ["ptMinDays", "Minimum days a week", "", 1, 1, 7, "Enter a whole number from 1 to 7.", true],
+      ["ptMinShift", "Shortest shift (paid hours)", "", 0.25, 2, 10, "Enter between 2 and 10 hours, in quarter hours.", false, true],
+      ["ptMaxShift", "Longest shift (paid hours)", "", 0.25, 2, 10, "Enter between 2 and 10 hours, in quarter hours.", false, true],
+      ["_sub", "Meal breaks", ""],
+      ["mealMins", "Unpaid meal break (minutes)", "", 15, 0, 60, "Enter 0, 15, 30, 45 or 60 minutes.", false, false, 15],
+      ["mealAfter", "Needed after (hours worked)", "Shifts longer than this get a meal break, and nobody works longer than this without one.", 0.25, 2, 8, "Enter between 2 and 8 hours, in quarter hours.", false, true]
+    ]}
+  ];
+  var FIELD = {};
+  SECTIONS.forEach(function (s) { s.fields.forEach(function (f) { if (f[0] !== "_sub") FIELD[f[0]] = f; }); });
+  var PATTERN_KEYS = ["livePattern", "emailPattern", "claimPattern"];
+
+  var state = loadState() || clone(DEFAULTS);
+  var view = { scenario: "expected", day: 0 };
+  var results = null;
+
+  // ---------------------------------------------------------------- utils
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function $(id) { return document.getElementById(id); }
+  function toMin(hhmm) { var p = String(hhmm).split(":"); return (+p[0]) * 60 + (+p[1] || 0); }
+  function ampm(h) { return h >= 12 && h < 24 ? "pm" : "am"; }
+  function fmtTime(min) { var h = Math.floor(min / 60), m = min % 60; return (h % 12 || 12) + ":" + (m < 10 ? "0" : "") + m + ampm(h); }
+  function fmtHour(min) { var h = Math.floor(min / 60); return (h % 12 || 12) + ampm(h); }
+  function fmt(n, dp) {
+    if (!isFinite(n)) return "–";
+    return Number(n).toLocaleString("en-AU", { minimumFractionDigits: dp || 0, maximumFractionDigits: dp || 0 });
+  }
+  function fmtDur(sec) {
+    if (sec < 60) return fmt(sec) + " sec";
+    if (sec < 3600) return fmt(sec / 60, sec % 60 ? 1 : 0) + " min";
+    var h = sec / 3600; return fmt(h, h % 1 ? 2 : 0) + (h === 1 ? " hr" : " hrs");
+  }
+  function ordinal(n) { var s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY), s = raw ? JSON.parse(raw) : null;
+      for (var i = 0; !s && i < OLD_KEYS.length; i++) {
+        // Carry over inputs saved by earlier versions of the planner
+        var old = localStorage.getItem(OLD_KEYS[i]);
+        if (old) {
+          s = JSON.parse(old);
+          if (s && s.contactRate !== undefined && s.callRate === undefined) s.callRate = s.contactRate;
+          if (s && s.aht !== undefined && s.callAht === undefined) s.callAht = s.aht;
+          if (s && s.pattern) s.livePattern = s.pattern;
+        }
+      }
+      if (!s || !Array.isArray(s.hours) || s.hours.length !== 7 || !Array.isArray(s.shares) || s.shares.length !== 7) return null;
+      var merged = clone(DEFAULTS);
+      Object.keys(merged).forEach(function (k) { if (s[k] !== undefined && s[k] !== null) merged[k] = s[k]; });
+      return merged;
+    } catch (e) { return null; }
+  }
+  function saveState() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable: keep working in memory */ } }
+
+  // ------------------------------------------------------------- Erlang C
+  function erlangC(A, N) {
+    if (N <= A) return 1;
+    var B = 1;
+    for (var n = 1; n <= N; n++) B = (A * B) / (n + A * B);   // Erlang B, built up iteratively
+    return (N * B) / (N - A * (1 - B));
+  }
+  function metrics(items, ahtSec, N, T) {
+    if (items <= 0) return { sl: 1, asa: 0, occ: 0 };
+    var A = items * ahtSec / 900;
+    if (N <= A) return { sl: 0, asa: Infinity, occ: N > 0 ? 1 : 0 };
+    var pw = erlangC(A, N);
+    return { sl: 1 - pw * Math.exp(-(N - A) * T / ahtSec), asa: pw * ahtSec / (N - A), occ: A / N };
+  }
+  function agentsNeeded(items, ahtSec, target, T, maxOcc) {
+    if (items <= 0 || ahtSec <= 0) return 0;
+    var A = items * ahtSec / 900, N = Math.max(1, Math.floor(A) + 1);
+    while (N < 2000) {
+      var m = metrics(items, ahtSec, N, T);
+      if (m.sl >= target && m.occ <= maxOcc) return N;
+      N++;
+    }
+    return N;
+  }
+
+  // ------------------------------------------------------ arrival pattern
+  function bump(h, mu, sd) { return Math.exp(-0.5 * Math.pow((h - mu) / sd, 2)); }
+  function shape(pattern, h) {
+    if (pattern === "even") return 1;
+    if (pattern === "evening") return 0.2 + 0.55 * bump(h, 11, 1.5) + 0.6 * bump(h, 14, 1.5) + 1.0 * bump(h, 18.5, 1.4);
+    return 0.15 + 1.0 * bump(h, 10.75, 1.4) + 0.75 * bump(h, 14.25, 1.6) + 0.35 * bump(h, 19, 1.4);
+  }
+
+  // ------------------------------------------------------------- compute
+  function compute(st) {
+    var cap = st.maxOcc / 100;
+    var gross = 1 / ((1 - st.planned / 100) * (1 - st.unplanned / 100));
+    function fte(hours) { return hours * gross / st.fteHours; }
+    var perWeek = st.customers * 12 / 52 / 100;            // multiply by a monthly % rate
+    var contactsPerWeek = perWeek * (1 + st.uplift / 100);
+    var mult = { low: 1 - st.spread / 100, expected: 1, high: 1 + st.spread / 100 };
+    var callSec = st.callAht * 60, chatSec = st.chatAht * 60 / Math.max(1, st.chatConc);
+    var chasesPerClaim = (st.chasePct / 100) * st.chasesPer;
+    var routineItems = (st.lodgeAht > 0 ? 1 : 0) + (st.chaseAht > 0 ? chasesPerClaim : 0) + (st.completeAht > 0 ? 1 : 0);
+    var routineMins = st.lodgeAht + chasesPerClaim * st.chaseAht + st.completeAht;
+
+    var cls = {
+      live:    { T: st.slSeconds,        target: st.slTarget / 100,  pattern: st.livePattern },
+      urgent:  { T: st.urgentMins * 60,  target: st.urgentSl / 100,  pattern: st.claimPattern },
+      email:   { T: st.emailHrs * 3600,  target: st.emailSl / 100,   pattern: st.emailPattern },
+      routine: { T: st.routineHrs * 3600, target: st.routineSl / 100, pattern: st.claimPattern }
+    };
+    // Most urgent first: the order in which a cross-skilled team picks up work
+    var order = ["live", "urgent", "email", "routine"].sort(function (a, b) { return cls[a].T - cls[b].T; });
+
+    var shareSum = 0, layout = [];
+    for (var d = 0; d < 7; d++) {
+      var h = st.hours[d], L = { open: h.open, times: [], w: {}, ws: {} };
+      Object.keys(PATTERNS).forEach(function (p) { L.w[p] = []; L.ws[p] = 0; });
+      if (h.open) {
+        shareSum += Math.max(0, st.shares[d]);
+        for (var t = toMin(h.from); t < toMin(h.to); t += 15) {
+          L.times.push(t);
+          Object.keys(PATTERNS).forEach(function (p) { var x = shape(p, (t + 7.5) / 60); L.w[p].push(x); L.ws[p] += x; });
+        }
+      }
+      layout.push(L);
+    }
+
+    var out = {};
+    SCENARIOS.forEach(function (sc) {
+      var m = mult[sc];
+      var wk = { calls: contactsPerWeek * st.callRate * m, chats: contactsPerWeek * st.chatRate * m,
+                 emails: contactsPerWeek * st.emailRate * m, claims: perWeek * st.claimRate * m };
+      wk.urgent = wk.claims * st.urgentPct / 100;
+      wk.routine = wk.claims - wk.urgent;
+      var work = { live: 0, urgent: 0, email: 0, routine: 0 }, sepHours = { live: 0, urgent: 0, email: 0, routine: 0 };
+      var setBy = { floor: 0, live: 0, urgent: 0, email: 0, routine: 0 };
+      var staffed = 0, openSlots = 0, peak = 0;
+
+      var days = layout.map(function (L, d) {
+        if (!L.open) return [];
+        var share = shareSum > 0 ? Math.max(0, st.shares[d]) / shareSum : 0;
+        return L.times.map(function (t, i) {
+          function f(p) { return L.ws[p] > 0 ? share * L.w[p][i] / L.ws[p] : 0; }
+          var calls = wk.calls * f(cls.live.pattern), chats = wk.chats * f(cls.live.pattern);
+          var urgentN = wk.urgent * f(cls.urgent.pattern), emailN = wk.emails * f(cls.email.pattern);
+          var routineClaims = wk.routine * f(cls.routine.pattern);
+          var q = {
+            live:    { n: calls + chats, A: (calls * callSec + chats * chatSec) / 900 },
+            urgent:  { n: urgentN, A: urgentN * st.urgentAht * 60 / 900 },
+            email:   { n: emailN, A: emailN * st.emailAht * 60 / 900 },
+            routine: { n: routineClaims * routineItems, A: routineClaims * routineMins * 60 / 900 }
+          };
+          // One pooled team: size for each service level, counting all more-urgent work too
+          var cumN = 0, cumA = 0, need = 0, by = "floor", steps = [];
+          order.forEach(function (k) {
+            if (q[k].n <= 0 || q[k].A <= 0) return;
+            cumN += q[k].n; cumA += q[k].A;
+            var nk = agentsNeeded(cumN, cumA * 900 / cumN, cls[k].target, cls[k].T, cap);
+            steps.push({ k: k, n: cumN, A: cumA });
+            if (nk > need) { need = nk; by = k; }
+          });
+          var N = Math.max(need, st.floor);
+          if (need <= st.floor) by = "floor";
+          var sl = {};
+          steps.forEach(function (s) { sl[s.k] = metrics(s.n, s.A * 900 / s.n, N, cls[s.k].T).sl; });
+          // For comparison: each workstream with its own team
+          var sep = 0;
+          STREAMS.forEach(function (k) {
+            var x = q[k].n > 0 && q[k].A > 0 ? agentsNeeded(q[k].n, q[k].A * 900 / q[k].n, cls[k].target, cls[k].T, cap) : 0;
+            if (k === "live") x = Math.max(x, st.floor);
+            sep += x; sepHours[k] += x * 0.25;
+          });
+          STREAMS.forEach(function (k) { work[k] += q[k].A * 0.25; });
+          staffed += N * 0.25; openSlots++; setBy[by]++;
+          if (N > peak) peak = N;
+          return { t: t, calls: calls, chats: chats, q: q, Atot: q.live.A + q.urgent.A + q.email.A + q.routine.A, N: N, by: by, sl: sl, sep: sep };
+        });
+      });
+
+      var workTotal = work.live + work.urgent + work.email + work.routine;
+      var sepStaffed = sepHours.live + sepHours.urgent + sepHours.email + sepHours.routine;
+      out[sc] = {
+        wk: wk, days: days, openSlots: openSlots, openHours: openSlots / 4,
+        work: work, workTotal: workTotal, staffed: staffed, rostered: staffed * gross, fte: fte(staffed),
+        busy: staffed > 0 ? workTotal / staffed : 0,
+        sepHours: sepHours, sepStaffed: sepStaffed, sepFte: fte(sepStaffed),
+        setBy: setBy, peak: peak, gross: gross,
+        stages: {
+          lodged: wk.routine * st.lodgeAht / 60, chased: wk.routine * chasesPerClaim * st.chaseAht / 60,
+          completed: wk.routine * st.completeAht / 60, chases: wk.routine * chasesPerClaim
+        },
+        fteOf: fte
+      };
+    });
+    return out;
+  }
+
+  // -------------------------------------------------------------- render
+  function render() {
+    results = compute(state);
+    renderHero(); renderGrid(); renderBreakdown(); renderSummary(); renderDay(); renderSectionNotes();
+    scheduleRoster();
+  }
+
+  // ------------------------------------------------------------- roster
+  var roster = { key: null, search: null, token: 0, timer: null, result: null, error: null, chosenF: null, cache: {} };
+
+  function rosterRules(st) {
+    return { ftLen: Math.round(st.ftPaid * 4), ftDays: st.ftDays, ptWeek: Math.round(st.ptWeek * 4), ptMinDays: st.ptMinDays,
+             ptMinLen: Math.round(st.ptMinShift * 4), ptMaxLen: Math.round(st.ptMaxShift * 4),
+             meal: Math.round(st.mealMins / 15), mealAfter: Math.round(st.mealAfter * 4) };
+  }
+  function rulesProblem(ru) {
+    if (ru.ptMinLen > ru.ptMaxLen) return "The shortest part-time shift is longer than the longest.";
+    if (ru.ptMinDays * ru.ptMinLen > ru.ptWeek) return "Part-time hours a week are fewer than the minimum days × the shortest shift.";
+    if (ru.ptWeek > 7 * ru.ptMaxLen) return "Part-time hours a week can't fit into seven of the longest shifts.";
+    return null;
+  }
+  function scheduleRoster() {
+    clearTimeout(roster.timer);
+    roster.timer = setTimeout(startRoster, 250);
+  }
+  function startRoster() {
+    var ru = rosterRules(state), err = rulesProblem(ru);
+    var days = results[view.scenario].days.map(function (ds) { return ds.map(function (c) { return { t: c.t, N: c.N }; }); });
+    var key = JSON.stringify([ru, days]);
+    if (key === roster.key && !err) { renderRoster(); return; }
+    roster.key = key; roster.token++; roster.error = err; roster.result = null; roster.search = null; roster.chosenF = null;
+    if (err) { renderRoster(); return; }
+    var prob = rosterProblem(days, ru);
+    var fits = prob.D.some(function (x, d) { return x && dayCap(prob, d) >= ru.ptMinLen; });
+    if (!fits) { roster.error = "The shortest part-time shift doesn't fit into any day's opening hours."; renderRoster(); return; }
+    if (roster.cache[key]) { roster.result = roster.cache[key]; roster.prob = prob; renderRoster(); return; }
+    roster.prob = prob;
+    roster.search = new RosterSearch(prob);
+    var token = roster.token, lastDraw = 0;
+    (function tick() {
+      if (token !== roster.token) return;
+      var t0 = Date.now(), finished = false;
+      do { finished = roster.search.step(); } while (!finished && Date.now() - t0 < 60);
+      roster.result = roster.search.result();
+      if (!finished && Date.now() - lastDraw < 500) { setTimeout(tick, 0); return; }
+      lastDraw = Date.now();
+      if (finished) {
+        roster.cache[key] = roster.result;
+        var keys = Object.keys(roster.cache); if (keys.length > 12) delete roster.cache[keys[0]];
+      }
+      renderRoster();
+      if (!finished) setTimeout(tick, 0);
+    })();
+    renderRoster();
+  }
+  function chosenMix() {
+    var r = roster.result; if (!r || !r.best) return null;
+    if (roster.chosenF !== null) for (var i = 0; i < r.mixes.length; i++) if (r.mixes[i].F === roster.chosenF) return r.mixes[i];
+    return r.best;
+  }
+  function rosterCov(d, t) {
+    var m = chosenMix(); if (!m || !roster.prob || !roster.prob.D[d]) return null;
+    var x = roster.prob.D[d], i = t / 15 - x.o;
+    return i >= 0 && i < x.c - x.o ? m.state.cov[d][i] : null;
+  }
+  function slotTime(slot) { var min = slot * 15, h = Math.floor(min / 60), m = min % 60; return (h % 12 || 12) + (m ? ":" + (m < 10 ? "0" : "") + m : "") + ampm(h); }
+  function hrs(slots) { var h = slots / 4, dp = h % 1 === 0 ? 0 : (h * 2) % 1 === 0 ? 1 : 2; return fmt(h, dp) + (h === 1 ? " hr" : " hrs"); }
+
+  function renderRoster() {
+    var status = $("roster-status"), r = roster.result, m = chosenMix();
+    status.className = "roster-status" + (roster.search && !roster.search.done ? " busy" : "");
+    if (roster.error) {
+      status.textContent = "";
+      $("roster-lead").innerHTML = "<span class='roster-error'>" + esc(roster.error) + " Adjust the rostering rules to see a roster.</span>";
+      ["roster-stats", "roster-table", "mix-table"].forEach(function (id) { $(id).innerHTML = ""; });
+      $("roster-note").textContent = ""; return;
+    }
+    if (!r || !m) {
+      status.textContent = roster.search && !roster.search.done ? "Finding the best fit…" : "";
+      $("roster-lead").textContent = roster.search && !roster.search.done ? "Working out shifts…" : "No roster fits these rules and opening hours. Try longer shifts or fewer minimum days.";
+      ["roster-stats", "roster-table", "mix-table"].forEach(function (id) { $(id).innerHTML = ""; });
+      $("roster-note").textContent = ""; return;
+    }
+    status.textContent = roster.search && !roster.search.done ? "Still improving, showing the best so far" : "Best fit found";
+    var ru = roster.prob.rules, prob = roster.prob;
+    var floorSlots = 0; m.state.cov.forEach(function (c) { if (c) for (var i = 0; i < c.length; i++) floorSlots += c[i]; });
+    var over = (floorSlots - prob.R) / 4, paid = m.paid / 4, fteV = paid / state.fteHours;
+    var relief = paid * (state.unplanned / 100) / (1 - state.unplanned / 100);
+    var isBest = m === r.best;
+    function people(n, one, many) { return n + " " + (n === 1 ? one : many); }
+    $("roster-lead").textContent = (isBest ? "" : "Your chosen mix: ") + people(m.F, "full-timer", "full-timers") + " and " + people(m.P, "part-timer", "part-timers") +
+      " cover every 15 minutes of the " + SCENARIO_NAMES[view.scenario].toLowerCase() + " case, with " + fmt(over, 1) + " hours a week (" + fmt(floorSlots ? over / (floorSlots / 4) * 100 : 0) + "%) above what's needed." +
+      (isBest ? "" : " The best fit is " + people(r.best.F, "full-timer", "full-timers") + " and " + people(r.best.P, "part-timer", "part-timers") + ".");
+    $("roster-stats").innerHTML =
+      "<div><dt>Team</dt><dd>" + (m.F + m.P) + "<small>" + m.F + " full-time, " + m.P + " part-time</small></dd></div>" +
+      "<div><dt>Paid hours a week</dt><dd>" + fmt(paid, paid % 1 ? 1 : 0) + "<small>" + fmt(prob.R / 4, 1) + " needed on the floor</small></dd></div>" +
+      "<div><dt>Roster FTE</dt><dd>" + fmt(fteV, 1) + "<small>at " + fmt(state.fteHours, state.fteHours % 1 ? 1 : 0) + " hrs per FTE</small></dd></div>" +
+      "<div><dt>Relief for absence</dt><dd>" + fmt(relief, 1) + " hrs<small>" + fmt(relief / state.fteHours, 1) + " FTE, at " + fmt(state.unplanned) + "% absence</small></dd></div>";
+
+    // Roster table: one row per person
+    var persons = m.state.persons.map(function (p, i) { return p; });
+    function firstStart(p) { for (var d = 0; d < 7; d++) if (p.sh[d]) return d * 1000 + p.sh[d].s; return 9999; }
+    persons.sort(function (a, b) { return (a.type === b.type ? 0 : a.type === "ft" ? -1 : 1) || firstStart(a) - firstStart(b); });
+    var nFt = 0, nPt = 0;
+    var html = "<caption class='visually-hidden'>Weekly roster</caption><thead><tr><th scope='col'>Person</th>" + SHORT.map(function (s) { return "<th scope='col'>" + s + "</th>"; }).join("") + "<th scope='col' class='num'>Paid</th></tr></thead><tbody>";
+    persons.forEach(function (p) {
+      var name = p.type === "ft" ? "Full-time " + (++nFt) : "Part-time " + (++nPt), total = 0;
+      html += "<tr><th scope='row'>" + name + "</th>";
+      for (var d = 0; d < 7; d++) {
+        var sh = p.sh[d];
+        if (!sh) { html += "<td><span class='visually-hidden'>off</span></td>"; continue; }
+        var span = spanOf(ru, sh.len); total += sh.len;
+        html += "<td class='on'>" + slotTime(sh.s) + "–" + slotTime(sh.s + span) +
+          "<span class='hrs'>" + hrs(sh.len) + "</span>" + (sh.m >= 0 ? "<span class='hrs'>Meal " + slotTime(sh.s + sh.m) + "</span>" : "") + "</td>";
+      }
+      html += "<td class='num'>" + hrs(total) + "</td></tr>";
+    });
+    $("roster-table").innerHTML = html + "</tbody>";
+    $("roster-note").textContent = "Shift times are in Sydney/Melbourne time. Meal breaks are unpaid and placed where cover allows. Paid rest breaks, training and meetings aren't scheduled yet, and the relief figure is extra cover to hire or hold in reserve for sick leave and absence.";
+
+    var mixes = r.mixes.slice().sort(function (a, b) { return a.F - b.F; });
+    var mh = "<thead><tr><th scope='col'>Full-time</th><th scope='col'>Part-time</th><th scope='col'>People</th><th scope='col'>Paid hours</th><th scope='col'>Above what's needed</th><th scope='col'><span class='visually-hidden'>Show</span></th></tr></thead><tbody>";
+    mixes.forEach(function (x) {
+      var fs = 0; x.state.cov.forEach(function (c) { if (c) for (var i = 0; i < c.length; i++) fs += c[i]; });
+      var chosen = x === m;
+      mh += "<tr" + (chosen ? " class='chosen'" : "") + "><td>" + x.F + "</td><td>" + x.P + "</td><td>" + (x.F + x.P) + "</td><td>" + fmt(x.paid / 4, 1) + (x === r.best ? "<span class='best-tag'>Best fit</span>" : "") + "</td><td>" + fmt((fs - prob.R) / 4, 1) + " hrs</td>" +
+        "<td><button type='button' class='mix-btn' data-f='" + x.F + "' aria-pressed='" + chosen + "'>" + (chosen ? "Showing" : "Show") + "</button></td></tr>";
+    });
+    $("mix-table").innerHTML = mh + "</tbody>";
+    renderDay();
+    renderHeroRoster(m, r);
+  }
+  function renderHeroRoster(m, r) {
+    var el = $("hero-roster");
+    if (!el) return;
+    el.textContent = m ? "The best-fitting roster uses " + r.best.F + " full-time and " + r.best.P + " part-time staff." : "";
+  }
+
+  function renderHero() {
+    var r = results[view.scenario];
+    $("fte-value").textContent = fmt(r.fte, 1);
+    $("hero-text").textContent = "for one cross-skilled team to cover every workstream in the " + SCENARIO_NAMES[view.scenario].toLowerCase() + " case, across " + fmt(r.openHours, r.openHours % 1 ? 2 : 0) + " opening hours a week.";
+    if (!r.openSlots) { $("hero-sub").textContent = "Add some opening hours to see a result."; }
+    else {
+      var saved = r.sepFte - r.fte;
+      $("hero-sub").textContent = "Separate teams for each workstream would need " + fmt(r.sepFte, 1) + " FTE, so cross-skilling saves " + fmt(saved, 1) + ". The team spends " + fmt(r.busy * 100) + "% of its staffed time on work; the rest is minimum cover and headroom to hit service levels.";
+    }
+    Array.prototype.forEach.call(document.querySelectorAll("#scenario-seg button"), function (b) {
+      b.setAttribute("aria-pressed", b.dataset.scenario === view.scenario ? "true" : "false");
+    });
+  }
+
+  function renderGrid() {
+    var r = results[view.scenario], table = $("week-grid");
+    var minT = Infinity, maxT = -Infinity;
+    r.days.forEach(function (ds) { ds.forEach(function (c) { minT = Math.min(minT, c.t); maxT = Math.max(maxT, c.t + 15); }); });
+    if (!isFinite(minT)) { table.innerHTML = "<tbody><tr><td class='closed-msg'>Every day is set to closed. Open at least one day under Opening hours.</td></tr></tbody>"; return; }
+    var cols = [];
+    for (var t = minT; t < maxT; t += 15) cols.push(t);
+    var html = "<caption class='visually-hidden'>People needed per 15-minute interval, " + SCENARIO_NAMES[view.scenario] + " scenario</caption><colgroup><col class='day-col'>" + cols.map(function () { return "<col>"; }).join("") + "</colgroup>";
+    html += "<thead><tr><td></td>" + cols.map(function (t) { return "<th scope='col'>" + (t % 60 === 0 ? fmtHour(t) : "<span class='visually-hidden'>" + fmtTime(t) + "</span>") + "</th>"; }).join("") + "</tr></thead><tbody>";
+    for (var d = 0; d < 7; d++) {
+      var byT = {};
+      r.days[d].forEach(function (c) { byT[c.t] = c; });
+      html += "<tr data-day='" + d + "'" + (d === view.day ? " class='sel'" : "") + "><th scope='row'>" + SHORT[d] + "</th>";
+      cols.forEach(function (t) {
+        var c = byT[t];
+        if (!c) { html += "<td class='c-closed' title='" + DAYS[d] + " " + fmtTime(t) + ": closed'><span class='visually-hidden'>closed</span></td>"; return; }
+        var tip = DAYS[d] + " " + fmtTime(t) + "–" + fmtTime(t + 15) + ": " + c.N + " people, set by " + NAMES[c.by].toLowerCase() +
+          ". Work in people: calls and chats " + fmt(c.q.live.A, 1) + ", urgent claims " + fmt(c.q.urgent.A, 1) + ", emails " + fmt(c.q.email.A, 1) + ", routine claims " + fmt(c.q.routine.A, 1) + ".";
+        html += "<td class='by-" + c.by + "' title='" + esc(tip) + "'>" + c.N + "<span class='visually-hidden'>, set by " + NAMES[c.by] + "</span></td>";
+      });
+      html += "</tr>";
+    }
+    table.innerHTML = html + "</tbody>";
+  }
+
+  function targetText(pct, sec) { return fmt(pct, pct % 1 ? 1 : 0) + "% in " + fmtDur(sec); }
+
+  function renderBreakdown() {
+    var r = results[view.scenario], st = state, f = r.fteOf;
+    function row(cls, name, vol, target, work, staffed, fteV) {
+      return "<tr" + (cls ? " class='" + cls + "'" : "") + "><th scope='row'>" + name + "</th><td>" + vol + "</td><td>" + target + "</td><td>" + work + "</td><td>" + staffed + "</td><td>" + fteV + "</td></tr>";
+    }
+    var html = "<thead><tr><th scope='col'>" + SCENARIO_NAMES[view.scenario] + " case</th><th scope='col'>Per week</th><th scope='col'>Target</th><th scope='col'>Work hours</th><th scope='col'>Staffed hours</th><th scope='col'>FTE</th></tr></thead><tbody>";
+    html += row("", "Calls and chats, as a separate team", fmt(r.wk.calls) + " calls, " + fmt(r.wk.chats) + " chats", targetText(st.slTarget, st.slSeconds), fmt(r.work.live, 1), fmt(r.sepHours.live, 1), fmt(f(r.sepHours.live), 1));
+    html += row("", "Emails, as a separate team", fmt(r.wk.emails) + " emails", targetText(st.emailSl, st.emailHrs * 3600), fmt(r.work.email, 1), fmt(r.sepHours.email, 1), fmt(f(r.sepHours.email), 1));
+    html += row("", "Urgent claims, as a separate team", fmt(r.wk.urgent) + " claims", targetText(st.urgentSl, st.urgentMins * 60), fmt(r.work.urgent, 1), fmt(r.sepHours.urgent, 1), fmt(f(r.sepHours.urgent), 1));
+    html += row("", "Routine claims, as a separate team", fmt(r.wk.routine) + " claims", targetText(st.routineSl, st.routineHrs * 3600), fmt(r.work.routine, 1), fmt(r.sepHours.routine, 1), fmt(f(r.sepHours.routine), 1));
+    html += row("sub", "Lodged", fmt(r.wk.routine) + " claims", "", fmt(r.stages.lodged, 1), "", "");
+    html += row("sub", "Chased", fmt(r.stages.chases) + " chases", "", fmt(r.stages.chased, 1), "", "");
+    html += row("sub", "Completed", fmt(r.wk.routine) + " claims", "", fmt(r.stages.completed, 1), "", "");
+    html += row("total", "Separate teams in total", "", "", fmt(r.workTotal, 1), fmt(r.sepStaffed, 1), fmt(r.sepFte, 1));
+    html += row("key", "One cross-skilled team", "", "", fmt(r.workTotal, 1), fmt(r.staffed, 1), fmt(r.fte, 1));
+    html += row("", "Saved by cross-skilling", "", "", "", fmt(r.sepStaffed - r.staffed, 1), fmt(r.sepFte - r.fte, 1));
+    $("breakdown").innerHTML = html + "</tbody>";
+  }
+
+  function renderSummary() {
+    function pctOf(r, k) { return r.openSlots ? fmt(r.setBy[k] / r.openSlots * 100) + "%" : "–"; }
+    var rows = [
+      ["FTE, one cross-skilled team", function (r) { return fmt(r.fte, 1); }, "key"],
+      ["FTE, separate teams", function (r) { return fmt(r.sepFte, 1); }],
+      ["Rostered hours per week", function (r) { return fmt(r.rostered, 1); }],
+      ["Most people working at once", function (r) { return fmt(r.peak); }],
+      ["Staffed time spent on work", function (r) { return fmt(r.busy * 100) + "%"; }],
+      ["Intervals set by minimum cover", function (r) { return pctOf(r, "floor"); }],
+      ["Set by calls and chats", function (r) { return pctOf(r, "live"); }],
+      ["Set by urgent claims", function (r) { return pctOf(r, "urgent"); }],
+      ["Set by emails or routine claims", function (r) { return r.openSlots ? fmt((r.setBy.email + r.setBy.routine) / r.openSlots * 100) + "%" : "–"; }]
+    ];
+    var html = "<thead><tr><th scope='col'><span class='visually-hidden'>Measure</span></th>" + SCENARIOS.map(function (sc) {
+      return "<th scope='col'" + (sc === view.scenario ? " class='sel'" : "") + ">" + SCENARIO_NAMES[sc] + "</th>";
+    }).join("") + "</tr></thead><tbody>";
+    rows.forEach(function (row) {
+      html += "<tr" + (row[2] ? " class='" + row[2] + "'" : "") + "><th scope='row'>" + row[0] + "</th>" + SCENARIOS.map(function (sc) {
+        return "<td" + (sc === view.scenario ? " class='sel'" : "") + ">" + row[1](results[sc]) + "</td>";
+      }).join("") + "</tr>";
+    });
+    $("summary").innerHTML = html + "</tbody>";
+  }
+
+  function renderDay() {
+    $("day-tabs").innerHTML = SHORT.map(function (s, d) {
+      return "<button type='button' data-day='" + d + "' aria-pressed='" + (d === view.day) + "' aria-label='" + DAYS[d] + "'>" + s + "</button>";
+    }).join("");
+    var slots = results[view.scenario].days[view.day];
+    $("intervals-toggle").textContent = "Show every interval for " + DAYS[view.day];
+    if (!slots.length) {
+      $("chart").innerHTML = "<p class='closed-msg'>Closed on " + DAYS[view.day] + "s. Change this under Opening hours.</p>";
+      $("day-summary").textContent = ""; $("intervals").innerHTML = "";
+      return;
+    }
+    $("chart").innerHTML = chartSvg(slots);
+    var staffedH = 0, workH = 0, peak = slots[0], urgentSet = 0, urgentItems = 0;
+    slots.forEach(function (c) { staffedH += c.N * 0.25; workH += c.Atot * 0.25; urgentItems += c.q.urgent.n; if (c.N > peak.N) peak = c; if (c.by === "urgent") urgentSet++; });
+    var text = DAYS[view.day] + ": " + fmt(staffedH, 1) + " staffed hours, " + fmt(staffedH ? workH / staffedH * 100 : 0) + "% of it on work. The busiest point is " + peak.N + " people from " + fmtTime(peak.t) + ", with about " + fmt(urgentItems, 1) + " urgent claims across the day.";
+    if (urgentSet) text += " Urgent claims set staffing in " + urgentSet + " of " + slots.length + " intervals.";
+    $("day-summary").textContent = text;
+
+    var html = "<thead><tr><th scope='col'>Time</th><th scope='col'>Calls and chats</th><th scope='col'>Emails</th><th scope='col'>Urgent claims</th><th scope='col'>Routine claim tasks</th><th scope='col'>Work, in people</th><th scope='col'>People needed</th><th scope='col'>Rostered</th><th scope='col'>Set by</th><th scope='col'>Calls and chats SL</th><th scope='col'>Urgent claims SL</th></tr></thead><tbody>";
+    slots.forEach(function (c) {
+      html += "<tr><td>" + fmtTime(c.t) + "</td><td>" + fmt(c.q.live.n, 2) + "</td><td>" + fmt(c.q.email.n, 2) + "</td><td>" + fmt(c.q.urgent.n, 2) + "</td><td>" + fmt(c.q.routine.n, 2) + "</td>" +
+        "<td>" + fmt(c.Atot, 2) + "</td><td>" + c.N + "</td><td>" + (rosterCov(view.day, c.t) === null ? "–" : rosterCov(view.day, c.t)) + "</td><td class='left'>" + NAMES[c.by] + "</td>" +
+        "<td>" + (c.sl.live !== undefined ? fmt(c.sl.live * 100, 1) + "%" : "–") + "</td><td>" + (c.sl.urgent !== undefined ? fmt(c.sl.urgent * 100, 1) + "%" : "–") + "</td></tr>";
+    });
+    $("intervals").innerHTML = html + "</tbody>";
+  }
+
+  function chartSvg(slots) {
+    var W = 720, H = 280, L = 40, R = 16, Tp = 20, B = 34;
+    var t0 = slots[0].t, t1 = slots[slots.length - 1].t + 15, n = (t1 - t0) / 15;
+    var pw = W - L - R, ph = H - Tp - B, bw = pw / n;
+    var maxV = Math.max(1, Math.max.apply(null, slots.map(function (c) { var r = rosterCov(view.day, c.t); return Math.max(c.N, r === null ? 0 : r); })));
+    var step = maxV <= 6 ? 1 : maxV <= 14 ? 2 : Math.ceil(maxV / 6);
+    var top = Math.ceil(maxV * 1.1 / step) * step;
+    function y(v) { return Tp + ph - (v / top) * ph; }
+    var s = "<svg viewBox='0 0 " + W + " " + H + "' role='img' aria-label='People needed on " + DAYS[view.day] + " by 15-minute interval, showing time spent on each workstream and time ready for the next item'>";
+    s += "<defs><pattern id='idle-hatch' width='5' height='5' patternUnits='userSpaceOnUse' patternTransform='rotate(45)'><rect width='5' height='5' class='ch-idle-bg'/><line x1='0' y1='0' x2='0' y2='5' class='ch-idle-line'/></pattern></defs>";
+    for (var a = 0; a <= top + 1e-9; a += step) {
+      s += "<line x1='" + L + "' x2='" + (W - R) + "' y1='" + y(a).toFixed(1) + "' y2='" + y(a).toFixed(1) + "' class='ch-grid'/>";
+      s += "<text x='" + (L - 8) + "' y='" + (y(a) + 4).toFixed(1) + "' text-anchor='end' class='ch-label'>" + a + "</text>";
+    }
+    s += "<text x='" + L + "' y='" + (Tp - 6) + "' class='ch-label'>People</text>";
+    slots.forEach(function (c) {
+      var i = (c.t - t0) / 15, x = (L + i * bw + bw * 0.12).toFixed(1), w = (bw * 0.76).toFixed(1), base = 0;
+      ["live", "urgent", "email", "routine"].forEach(function (k) {
+        var v = c.q[k].A;
+        if (v <= 0) return;
+        var y0 = y(base), y1 = y(base + v);
+        s += "<rect x='" + x + "' y='" + y1.toFixed(1) + "' width='" + w + "' height='" + Math.max(0, y0 - y1).toFixed(1) + "' class='ch-" + k + "'><title>" + fmtTime(c.t) + ": " + NAMES[k].toLowerCase() + ", " + fmt(v, 2) + " people's worth of work</title></rect>";
+        base += v;
+      });
+      if (c.N > base) {
+        s += "<rect x='" + x + "' y='" + y(c.N).toFixed(1) + "' width='" + w + "' height='" + (y(base) - y(c.N)).toFixed(1) + "' fill='url(#idle-hatch)' class='ch-idle'><title>" + fmtTime(c.t) + ": " + c.N + " people needed, " + fmt(c.N - base, 2) + " ready for the next item</title></rect>";
+      }
+    });
+    var path = "", any = false;
+    slots.forEach(function (c) {
+      var v = rosterCov(view.day, c.t); if (v === null) return;
+      var i = (c.t - t0) / 15, x0 = L + i * bw, yv = y(Math.min(v, top)).toFixed(1);
+      path += (any ? "L" : "M") + x0.toFixed(1) + " " + yv + " L" + (x0 + bw).toFixed(1) + " " + yv + " "; any = true;
+    });
+    if (any) s += "<path d='" + path + "' class='ch-roster'/>";
+    for (var t = Math.ceil(t0 / 60) * 60; t < t1; t += 60) {
+      s += "<text x='" + (L + (t - t0) / 15 * bw).toFixed(1) + "' y='" + (H - 12) + "' class='ch-label'>" + fmtHour(t) + "</text>";
+    }
+    return s + "</svg>";
+  }
+
+  function renderSectionNotes() {
+    var r = results[view.scenario];
+    var notes = { live: r.work.live, email: r.work.email, claims: r.work.urgent + r.work.routine };
+    Object.keys(notes).forEach(function (k) { var el = $("sum-" + k); if (el) el.textContent = fmt(notes[k], 1) + " work hrs a week"; });
+  }
+
+  // --------------------------------------------------------------- form
+  function fieldHtml(f) {
+    if (f[0] === "_sub") return "<p class='subhead'>" + f[1] + "</p>" + (f[2] ? "<p class='hint'>" + f[2] + "</p>" : "");
+    return "<div class='field'><label for='" + f[0] + "'>" + f[1] + "</label>" +
+      "<input id='" + f[0] + "' type='number' min='" + f[4] + "' max='" + f[5] + "' step='" + f[3] + "' inputmode='decimal' value='" + state[f[0]] + "'>" +
+      (f[2] ? "<p class='hint'>" + f[2] + "</p>" : "") + "<p class='error' id='" + f[0] + "-error'></p></div>";
+  }
+  function patternSelect(key) {
+    return "<div class='field stack'><label for='" + key + "'>Pattern through the day</label><select id='" + key + "'>" +
+      Object.keys(PATTERNS).map(function (p) { return "<option value='" + p + "'" + (state[key] === p ? " selected" : "") + ">" + PATTERNS[p] + "</option>"; }).join("") + "</select></div>";
+  }
+  function buildForm() {
+    var html = SECTIONS.map(function (sec) {
+      var h = "<details class='section' open><summary><span class='sum-title'>" +
+        (sec.dot ? "<span class='sum-dot' style='background:" + sec.dot + "' aria-hidden='true'></span>" : "") + sec.title + "</span>" +
+        (sec.dot ? "<span class='sum-note' id='sum-" + sec.id + "'></span>" : "") + "</summary>";
+      h += sec.fields.map(fieldHtml).join("");
+      if (sec.patternKey) h += patternSelect(sec.patternKey);
+      return h + "</details>";
+    }).join("");
+    html += "<details class='section' open><summary><span class='sum-title'>Opening hours</span></summary><p class='hint' style='margin:0 0 4px'>Sydney/Melbourne time. All work arrives and is handled while you're open.</p>" +
+      DAYS.map(function (name, d) {
+        var h = state.hours[d];
+        return "<div class='hours-row'><label for='open-" + d + "'>" + SHORT[d] + "</label>" +
+          "<input type='checkbox' id='open-" + d + "' " + (h.open ? "checked" : "") + " aria-label='Open on " + name + "'>" +
+          "<input type='time' step='900' id='from-" + d + "' value='" + h.from + "' aria-label='" + name + " opens' " + (h.open ? "" : "disabled") + ">" +
+          "<input type='time' step='900' id='to-" + d + "' value='" + h.to + "' aria-label='" + name + " closes' " + (h.open ? "" : "disabled") + "></div>";
+      }).join("") + "<p class='error' id='hours-error'></p></details>";
+    html += "<details class='section' open><summary><span class='sum-title'>Which days work arrives</span></summary><p class='hint' style='margin:0'>Share of each week's work by day (%), used for every workstream.</p><div class='share-grid'>" +
+      SHORT.map(function (s, d) { return "<div><label for='share-" + d + "'>" + s + "</label><input type='number' id='share-" + d + "' min='0' max='100' step='1' inputmode='decimal' value='" + state.shares[d] + "'></div>"; }).join("") +
+      "</div><p class='share-total' id='share-total'></p></details>";
+    $("form-body").innerHTML = html;
+    updateShareTotal();
+  }
+
+  function readNumber(k) {
+    var f = FIELD[k], el = $(k), v = parseFloat(el.value);
+    var ok = el.value.trim() !== "" && isFinite(v) && v >= f[4] && v <= f[5] && (!f[7] || Math.floor(v) === v) &&
+      (!f[8] || Math.abs(v * 4 - Math.round(v * 4)) < 1e-9) && (!f[9] || v % f[9] === 0);
+    el.setAttribute("aria-invalid", ok ? "false" : "true");
+    $(k + "-error").textContent = ok ? "" : f[6];
+    if (ok) state[k] = v;
+  }
+  function readHours() {
+    var problems = [];
+    for (var d = 0; d < 7; d++) {
+      var open = $("open-" + d).checked, fromEl = $("from-" + d), toEl = $("to-" + d), bad = false;
+      fromEl.disabled = !open; toEl.disabled = !open;
+      var from = fromEl.value, to = toEl.value;
+      if (open) {
+        if (!from || !to) { bad = true; problems.push(DAYS[d] + ": enter both times."); }
+        else if (toMin(from) % 15 || toMin(to) % 15) { bad = true; problems.push(DAYS[d] + ": use times on the quarter hour."); }
+        else if (toMin(to) <= toMin(from)) { bad = true; problems.push(DAYS[d] + ": closing time must be after opening."); }
+      }
+      fromEl.setAttribute("aria-invalid", bad ? "true" : "false");
+      toEl.setAttribute("aria-invalid", bad ? "true" : "false");
+      if (!bad) state.hours[d] = { open: open, from: from || state.hours[d].from, to: to || state.hours[d].to };
+    }
+    $("hours-error").textContent = problems.join(" ");
+  }
+  function readShares() {
+    for (var d = 0; d < 7; d++) {
+      var el = $("share-" + d), v = parseFloat(el.value);
+      var ok = el.value.trim() !== "" && isFinite(v) && v >= 0 && v <= 100;
+      el.setAttribute("aria-invalid", ok ? "false" : "true");
+      if (ok) state.shares[d] = v;
+    }
+  }
+  function updateShareTotal() {
+    var total = 0, openTotal = 0;
+    for (var d = 0; d < 7; d++) { total += state.shares[d]; if (state.hours[d].open) openTotal += state.shares[d]; }
+    var msg = "Total " + fmt(total, total % 1 ? 1 : 0) + "%.";
+    if (Math.abs(openTotal - 100) > 0.05) msg += " Shares for open days are scaled to 100%.";
+    $("share-total").textContent = msg;
+  }
+
+  function onInput(e) {
+    var id = e.target.id;
+    if (FIELD[id]) readNumber(id);
+    else if (/^(open|from|to)-/.test(id)) readHours();
+    else if (/^share-/.test(id)) readShares();
+    else if (PATTERN_KEYS.indexOf(id) >= 0) state[id] = e.target.value;
+    else return;
+    updateShareTotal();
+    saveState();
+    render();
+  }
+
+  // -------------------------------------------------------------- wire up
+  buildForm();
+  $("form").addEventListener("input", onInput);
+  $("form").addEventListener("change", onInput);
+  $("reset").addEventListener("click", function () {
+    state = clone(DEFAULTS);
+    try { localStorage.removeItem(STORE_KEY); OLD_KEYS.forEach(function (k) { localStorage.removeItem(k); }); } catch (e) { /* ignore */ }
+    buildForm(); render();
+  });
+  $("scenario-seg").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-scenario]"); if (b) { view.scenario = b.dataset.scenario; roster.chosenF = null; render(); }
+  });
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest(".mix-btn");
+    if (b) { roster.chosenF = +b.dataset.f; if (roster.result && roster.result.best && roster.result.best.F === roster.chosenF) roster.chosenF = null; renderRoster(); renderDay(); }
+  });
+  $("day-tabs").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-day]"); if (b) { view.day = +b.dataset.day; renderGrid(); renderDay(); }
+  });
+  $("week-grid").addEventListener("click", function (e) {
+    var tr = e.target.closest("tr[data-day]"); if (tr) { view.day = +tr.dataset.day; renderGrid(); renderDay(); }
+  });
+  render();
+
+  window.__planner = { compute: compute, agentsNeeded: agentsNeeded, metrics: metrics, DEFAULTS: DEFAULTS, roster: roster };   // exposed for testing only
+})();
+</script>
+</body>
+</html>
